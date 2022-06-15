@@ -1,4 +1,6 @@
 from ctypes import c_int, c_ulong, c_char_p, c_long, c_void_p, string_at, byref, cdll
+from distutils.sysconfig import get_config_var
+from pathlib import Path
 
 
 class BoltDB:
@@ -28,8 +30,11 @@ class BoltDB:
         }
     }
 
-    def __init__(self, libPath="./bolt_lib.so"):
-        bolt = cdll.LoadLibrary(libPath)
+    def __init__(self):
+        p = Path(__file__).absolute().parent.parent
+        so_file = p / ('_bbolt_go' + get_config_var("EXT_SUFFIX"))
+        print("loading", so_file)
+        bolt = cdll.LoadLibrary(so_file)
         for k in BoltDB.typeDefs:
             v = BoltDB.typeDefs[k]
             func = getattr(bolt, k)
