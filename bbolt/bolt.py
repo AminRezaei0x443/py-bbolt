@@ -33,7 +33,6 @@ class BoltDB:
     def __init__(self):
         p = Path(__file__).absolute().parent.parent
         so_file = p / ('_bbolt_go' + get_config_var("EXT_SUFFIX"))
-        print("loading", so_file)
         bolt = cdll.LoadLibrary(so_file)
         for k in BoltDB.typeDefs:
             v = BoltDB.typeDefs[k]
