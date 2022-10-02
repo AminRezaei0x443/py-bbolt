@@ -58,6 +58,17 @@ func getBK(dbHandle C.ulong, bucket *C.char, key *C.char, size unsafe.Pointer) u
 	return ptr
 }
 
+//export createBucket
+func createBucket(dbHandle C.ulong, bucket *C.char) C.int {
+	db := (core.GetObject(uint64(dbHandle))).(*bolt_ffi.BoltDB)
+	e := db.CreateBucket(C.GoString(bucket))
+	if e != nil {
+		_globalError = e
+		return 0
+	}
+	return 1
+}
+
 //export closeDatabase
 func closeDatabase(dbHandle C.ulong) C.int {
 	db := (core.GetObject(uint64(dbHandle))).(*bolt_ffi.BoltDB)

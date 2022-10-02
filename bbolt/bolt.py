@@ -1,6 +1,7 @@
 from ctypes import c_int, c_ulong, c_char_p, c_long, c_void_p, string_at, byref, cdll
 from distutils.sysconfig import get_config_var
 from pathlib import Path
+import os
 
 
 class BoltDB:
@@ -21,6 +22,10 @@ class BoltDB:
             "args": [c_ulong, c_char_p, c_char_p, c_void_p],
             "rt": c_void_p,
         },
+        "createBucket":{
+            "args": [c_ulong, c_char_p],
+            "rt": c_int,
+        },
         "closeDatabase":{
             "args": [c_ulong],
             "rt": c_int,
@@ -32,7 +37,7 @@ class BoltDB:
 
     def __init__(self):
         p = Path(__file__).absolute().parent.parent
-        so_file = p / ('_bbolt_go' + get_config_var("EXT_SUFFIX"))
+        so_file = os.path.join(p.absolute(), ('_bbolt_go' + get_config_var("EXT_SUFFIX")))
         bolt = cdll.LoadLibrary(so_file)
         for k in BoltDB.typeDefs:
             v = BoltDB.typeDefs[k]
@@ -46,9 +51,7 @@ class BoltDB:
         e = self._currentError()
         if e is None:
             return None
-        v = string_at(e)
-        self._freeP(e)
-        return v
+        return e.decode('utf-8')
 
     def _rerr(self):
         e = self._err()
@@ -83,12 +86,20 @@ class BoltDB:
         if res == 0:
             self._rerr()
     
+    def create_bucket(self, bucket):
+        handle = self._ensureHandle()
+        b = bucket.encode("utf-8")
+        res = self._createBucket(handle, b)
+        if res == 0:
+            self._rerr()
+
     def get(self, bucket, key):
         handle = self._ensureHandle()
         b = bucket.encode("utf-8")
         k = key.encode("utf-8")
         vLen = c_int(0)
         res = self._getBK(handle, b, k, byref(vLen))
+        vLen = vLen.value
         if vLen == -1:
             self._rerr()
         value = string_at(res, vLen)
